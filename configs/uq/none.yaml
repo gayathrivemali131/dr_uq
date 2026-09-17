@@ -1,0 +1,2 @@
+name: none
+score: entropy        # maxp | entropy (mi is undefined without stochastic passes)

@@ -1,0 +1,3 @@
+name: ensemble
+score: mi             # maxp | entropy | mi
+n_members: 5

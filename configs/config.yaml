@@ -1,0 +1,64 @@
+# Primary Hydra config. Compose with groups: data=, model=, uq=, train=, deploy=, experiment=.
+defaults:
+  - data: synthetic
+  - model: resnet50
+  - uq: none
+  - train: default
+  - deploy: default
+  - _self_
+  - experiment: null
+
+project: dr_uq
+run_name: ${data.name}-${model.name}-s${train.seed}
+run_dir: runs/${run_name}
+
+paths:
+  data_root: ${oc.env:DR_UQ_DATA_ROOT,data}
+  cache_dir: ${oc.env:DR_UQ_CACHE_DIR,cache}
+  manifests_dir: manifests
+
+wandb:
+  enabled: false
+  mode: offline
+  project: dr_uq
+  entity: null
+
+eval:
+  ckpt: ${run_dir}/checkpoints/best.ckpt
+  ensemble_ckpts: []            # used by uq=ensemble; defaults to seeds of the same model
+  out_dir: ${run_dir}/eval-${uq.name}
+  external: false               # evaluate on the whole `data` corpus as a test set
+  batch_size: 32
+  export_onnx: true
+  n_tau: 200
+  target_coverages: [0.8, 0.9]
+  quality_bins: [0.0, 0.4, 0.6, 0.8, 1.01]
+  bootstrap: 1000
+  accelerator: auto
+
+explain:
+  n_images: 4
+  out_dir: ${run_dir}/explain
+  ckpt: ${eval.ckpt}
+  generator_ckpt: null          # StyleGAN2-ADA pickle/pt; null -> placeholder generator
+  generator: placeholder        # placeholder | stylegan2
+  latent_dim: 64
+  invert_steps: 100
+  invert_lr: 0.05
+  cf_steps: 100
+  cf_lr: 0.05
+  lambda_l1: 1.0
+  lambda_lpips: 0.0             # >0 requires the `lpips` weights (downloaded on first use)
+  top_k_percent: 5.0
+  temperature: 1.0
+  compute_fid: false
+  gradcam: true
+
+hydra:
+  run:
+    dir: ${run_dir}/.hydra_logs/${hydra.job.name}
+  sweep:
+    dir: runs/multirun/${now:%Y-%m-%d_%H-%M-%S}
+    subdir: ${hydra.job.num}
+  job:
+    chdir: false

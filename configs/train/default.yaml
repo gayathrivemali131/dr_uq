@@ -1,0 +1,20 @@
+seed: 0
+max_epochs: 30
+precision: 16-mixed          # falls back to 32-true on CPU
+accelerator: auto
+devices: 1
+deterministic: true
+lr_head: 3.0e-4
+lr_backbone: 1.0e-4
+weight_decay: 0.01
+warmup_epochs: 3
+label_smoothing: 0.05
+grad_clip: 1.0
+early_stopping:
+  monitor: val/qwk
+  mode: max
+  patience: 6
+limit_train_batches: 1.0
+limit_val_batches: 1.0
+log_every_n_steps: 10
+num_sanity_val_steps: 0

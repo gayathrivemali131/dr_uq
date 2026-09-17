@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      - name: Install
+        run: |
+          uv python install 3.11
+          uv sync --extra dev --frozen
+      - name: Ruff
+        run: uv run ruff check .
+      - name: Black
+        run: uv run black --check .
+      - name: Mypy
+        run: uv run mypy
+      - name: Hydra config composition check
+        run: |
+          uv run python scripts/check_configs.py
+      - name: Tests
+        env:
+          DR_UQ_TEST_FAST: "1"
+        run: uv run pytest -q

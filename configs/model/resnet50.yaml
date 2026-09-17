@@ -1,0 +1,7 @@
+name: resnet50
+timm_name: resnet50
+pretrained: true
+dropout: 0.2
+grad_checkpointing: false
+num_classes: ${data.num_classes}
+img_size: ${data.image_size}

@@ -1,0 +1,48 @@
+# Data and split manifests. Raw corpora are never downloaded automatically; register them
+# with `dvc add data/<corpus>` after obtaining them (see README). The manifest stages below
+# make split CSVs reproducible from (corpus, seed).
+stages:
+  synthetic_corpus:
+    cmd: python scripts/make_synthetic_corpus.py --out data/synthetic --n 300 --seed 0
+    deps:
+      - scripts/make_synthetic_corpus.py
+    outs:
+      - data/synthetic
+  manifest_synthetic:
+    cmd: python scripts/build_manifest.py data=synthetic
+    deps:
+      - data/synthetic/labels.csv
+      - dr_uq/data/splits.py
+      - dr_uq/data/preprocess.py
+      - configs/data/synthetic.yaml
+    outs:
+      - manifests/synthetic.csv
+  manifest_aptos:
+    cmd: python scripts/build_manifest.py data=aptos
+    deps:
+      - data/aptos2019/train.csv
+      - dr_uq/data/splits.py
+      - configs/data/aptos.yaml
+    outs:
+      - manifests/aptos.csv
+  manifest_eyepacs:
+    cmd: python scripts/build_manifest.py data=eyepacs
+    deps:
+      - data/eyepacs2015/trainLabels.csv
+      - dr_uq/data/splits.py
+      - configs/data/eyepacs.yaml
+    outs:
+      - manifests/eyepacs.csv
+  manifest_messidor2_external:
+    cmd: python scripts/build_manifest.py data=messidor2 eval.external=true
+    deps:
+      - data/messidor2/messidor_data.csv
+      - configs/data/messidor2.yaml
+    outs:
+      - manifests/messidor2_external.csv
+  manifest_idrid_external:
+    cmd: python scripts/build_manifest.py data=idrid eval.external=true
+    deps:
+      - configs/data/idrid.yaml
+    outs:
+      - manifests/idrid_external.csv

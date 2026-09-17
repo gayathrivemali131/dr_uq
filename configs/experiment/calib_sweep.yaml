@@ -1,0 +1,10 @@
+# @package _global_
+# Main calibration sweep: 3 backbones x 4 UQ methods x 3 seeds on APTOS.
+defaults:
+  - override /data: aptos
+
+sweep:
+  name: calib_sweep
+  train_overrides: "model=resnet50,efficientnet_b4,vit_b16 train.seed=0,1,2"
+  eval_overrides: "model=resnet50,efficientnet_b4,vit_b16 train.seed=0,1,2 uq=none,temp_scaling,mc_dropout,ensemble"
+  manifest: runs/sweeps/calib_sweep/manifest.json

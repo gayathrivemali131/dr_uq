@@ -1,0 +1,17 @@
+# @package _global_
+# End-to-end CPU smoke test on the synthetic corpus. Consumes the checkpoint written by
+#   python scripts/train.py data=synthetic model=resnet50 train.max_epochs=1
+defaults:
+  - override /data: synthetic
+  - override /model: resnet50
+  - override /uq: temp_scaling
+
+run_name: smoke
+run_dir: runs/smoke
+eval:
+  ckpt: runs/synthetic-resnet50-s0/checkpoints/best.ckpt
+  out_dir: runs/smoke
+  bootstrap: 100
+explain:
+  ckpt: runs/synthetic-resnet50-s0/checkpoints/best.ckpt
+  out_dir: runs/smoke/explain

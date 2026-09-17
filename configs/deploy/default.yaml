@@ -1,0 +1,15 @@
+onnx:
+  opset: 17
+  path: ${run_dir}/model.onnx
+  atol: 1.0e-3
+trt:
+  fp16_path: ${run_dir}/model_fp16.plan
+  int8_path: ${run_dir}/model_int8.plan
+  calib_cache: ${run_dir}/int8_calib.cache
+  calib_batches: 32
+  workspace_gb: 4
+profile:
+  warmup: 10
+  n_runs: 100
+  mc_passes: 20
+  out: ${run_dir}/profile

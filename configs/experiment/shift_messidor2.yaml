@@ -1,0 +1,15 @@
+# @package _global_
+# Distribution shift: APTOS-trained models evaluated on the whole of Messidor-2.
+defaults:
+  - override /data: messidor2
+
+eval:
+  external: true
+  ckpt: runs/aptos-${model.name}-s${train.seed}/checkpoints/best.ckpt
+  out_dir: runs/aptos-${model.name}-s${train.seed}/eval-messidor2-${uq.name}
+
+sweep:
+  name: shift_messidor2
+  train_overrides: null
+  eval_overrides: "model=resnet50,efficientnet_b4,vit_b16 train.seed=0,1,2 uq=none,temp_scaling,mc_dropout,ensemble"
+  manifest: runs/sweeps/shift_messidor2/manifest.json

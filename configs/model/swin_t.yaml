@@ -1,0 +1,8 @@
+name: swin_t
+timm_name: swin_tiny_patch4_window7_224
+pretrained: true
+dropout: 0.2
+grad_checkpointing: false
+num_classes: ${data.num_classes}
+img_size: ${data.image_size}
+window_size: 8

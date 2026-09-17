@@ -1,0 +1,7 @@
+name: vit_b16
+timm_name: vit_base_patch16_224
+pretrained: true
+dropout: 0.2
+grad_checkpointing: true
+num_classes: ${data.num_classes}
+img_size: ${data.image_size}

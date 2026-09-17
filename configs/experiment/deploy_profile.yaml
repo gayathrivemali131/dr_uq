@@ -1,0 +1,12 @@
+# @package _global_
+# Export + latency/memory profiling of the APTOS ResNet-50 model.
+defaults:
+  - override /data: aptos
+  - override /model: resnet50
+  - override /uq: temp_scaling
+
+run_name: aptos-resnet50-s0
+deploy:
+  profile:
+    warmup: 20
+    n_runs: 200

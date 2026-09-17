@@ -1,0 +1,3 @@
+name: mc_dropout
+score: mi             # maxp | entropy | mi
+n_passes: 20

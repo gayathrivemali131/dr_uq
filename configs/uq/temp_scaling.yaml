@@ -1,0 +1,4 @@
+name: temp_scaling
+score: entropy
+max_iter: 100
+lr: 0.01

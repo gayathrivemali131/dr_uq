@@ -1,0 +1,19 @@
+# @package _global_
+# Counterfactual validation on the IDRiD lesion-segmentation subset.
+defaults:
+  - override /data: idrid
+  - override /model: resnet50
+  - override /uq: temp_scaling
+
+eval:
+  external: true
+  ckpt: runs/aptos-resnet50-s0/checkpoints/best.ckpt
+explain:
+  ckpt: runs/aptos-resnet50-s0/checkpoints/best.ckpt
+  out_dir: runs/aptos-resnet50-s0/explain-idrid
+  n_images: 81
+  generator: stylegan2
+  generator_ckpt: runs/generator/stylegan2_ada.pkl
+  lambda_lpips: 0.5
+  compute_fid: true
+  gradcam: true
