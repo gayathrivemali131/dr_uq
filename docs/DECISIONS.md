@@ -102,3 +102,34 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
 - **Experiment membership** is recorded in each `report.json` (`experiment` field from
   `cfg.sweep.name`); `scripts/sweep.py` collects run directories by that field rather than by
   path convention, then writes `manifest.json` and the aggregated tables next to it.
+
+## Explanation layer
+- **Generator image space is the preprocessed (Graham-normalised, FOV-cropped) image in
+  `[0, 1]`**, i.e. the same space the grader is trained on (after ImageNet normalisation, applied
+  by `to_grader_input`). Counterfactuals and `Δ` are therefore reported in that space, which is
+  what the grader actually sees.
+- **StyleGAN2-ADA is not pip-installable**; `StyleGAN2Generator` unpickles an official
+  `network-snapshot-*.pkl` given `explain.stylegan2_repo` (checkout of NVlabs/stylegan2-ada-pytorch
+  on `sys.path`). `PlaceholderGenerator` (a small deterministic conv decoder, optionally trained as
+  an autoencoder by `scripts/train_generator.py`) implements the same interface so the whole
+  inversion → optimisation → validation path is testable on CPU. `explain.generator` selects.
+- **Inversion** optimises `w` (W space, one vector broadcast to all synthesis layers) from the
+  mean latent with Adam on L2 + λ·LPIPS. LPIPS is optional (`explain.lambda_lpips=0` by default
+  because the `lpips` package downloads backbone weights on first use); when >0 and unavailable
+  it degrades to L2 with a warning.
+- **Counterfactual objective** is exactly `CE(f(G(w))/T, g') + λ1‖G(w) − x‖₁ + λ2·LPIPS`, with the
+  grader frozen and its fitted temperature `T` read from the matching `eval` report when present.
+  Targets are restricted to `g ± 1` (`check_adjacent`); the default target is one grade healthier
+  (`g − 1`), or `g + 1` for grade 0.
+- **`Δ = |x' − x|` is stored per channel** `(3, S, S)`; lesion overlap uses the channel mean.
+- **Lesion consistency** takes the top-k % pixels of `|Δ|` (k = `explain.top_k_percent`, 5 % by
+  default) and reports hit-rate (fraction of those pixels inside a lesion), IoU and lesion recall,
+  versus a baseline of random *square* regions of equal area placed inside the FOV (mean over 20
+  draws). Masks are resized to the working resolution with nearest-neighbour interpolation.
+- **Grad-CAM** (Captum `LayerGradCam`) on the last `Conv2d` of the backbone is the attributive
+  baseline and gets the same lesion-overlap treatment; it is skipped for conv-free backbones (ViT).
+- **FID** uses `pytorch-fid` on the `real/` vs `counterfactual/` PNG folders written by
+  `explain.py` (`explain.compute_fid=true`; needs the Inception weights download). The Likert CSV
+  template anonymises image ids so the review can be blinded.
+- `explain.py` writes per-image `uncertainty` (predictive entropy under the fitted temperature)
+  alongside every explanation-quality metric to enable the uncertainty × explanation analysis.
