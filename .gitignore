@@ -7,11 +7,11 @@ dist/
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
-runs/
+/runs/
 outputs/
 multirun/
-cache/
-data/
+/cache/
+/data/
 manifests/*.csv
 wandb/
 *.ckpt

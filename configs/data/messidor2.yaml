@@ -1,0 +1,28 @@
+name: messidor2
+corpora: [messidor2]
+roots:
+  messidor2: ${paths.data_root}/messidor2
+image_size: 512
+num_classes: 5
+batch_size: 16
+num_workers: 4
+preprocess_workers: 8
+weighted_sampling: true
+split:
+  fractions: [0.7, 0.15, 0.15]
+  seed: 0
+preprocess:
+  graham_sigma: 10.0
+  fov_threshold: 10
+  quality:
+    blur_ref: 150.0
+    illum_grid: 8
+    w_blur: 0.4
+    w_illum: 0.3
+    w_fov: 0.3
+augment:
+  - {name: HorizontalFlip, p: 0.5}
+  - {name: VerticalFlip, p: 0.5}
+  - {name: Rotate, limit: 180, border_mode: 0, p: 0.9}
+  - {name: Affine, scale: [0.9, 1.1], p: 0.5}
+  - {name: RandomBrightnessContrast, brightness_limit: 0.15, contrast_limit: 0.15, p: 0.5}
