@@ -75,3 +75,30 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
   stochastic passes.
 - **ECE** uses right-inclusive equal-width bins so that confidence exactly 1.0 falls in the last
   bin; this matches `netcal.metrics.ECE(bins=15)` to 1e-6 (tested).
+
+## Decision layer / evaluation
+- **Gate semantics:** accept iff `u < tau` (strict). Hence `tau=0` refers everything and
+  `tau=inf` refers nothing, matching the contract tests; `maxp`/`entropy` are recomputed from the
+  probabilities inside the gate, `mi` must come from the UQ wrapper.
+- **AURC** is computed exactly from the full ordering (mean selective risk over all `n`
+  coverages), with ties broken pessimistically so the value is order-independent. The swept
+  200-point curve is for plotting/CSV. `optimal_aurc` gives the theoretical minimum for the
+  observed accuracy; `e_aurc` is the excess.
+- **Thresholds are chosen on validation and applied to test.** `evaluate.py` reports the test
+  risk–coverage curve, the test selective error at the validation-chosen `tau@80/90`, and a
+  referral-budget table (5/10/20/30/50 % of cases referred) with validation-chosen thresholds.
+  Stratification of abstentions uses the 80 % coverage operating point.
+- **External evaluation** (`eval.external=true`) places the whole corpus in the test split. To fit
+  temperature / choose thresholds you pass `eval.fit_data=<data group>` (e.g. `aptos`), whose
+  validation split is used; without it, post-hoc parameters stay at defaults and thresholds are
+  chosen on the external test set itself (reported as such: `n_val == n_test`).
+- **Ensemble members** default to `runs/<data>-<model>-s*/checkpoints/best.ckpt` (all seeds of the
+  same configuration) unless `eval.ensemble_ckpts` is given.
+- **Bootstrap CIs** in `report.py` resample images independently within each seed's run, average
+  the metric over seeds, and take the 2.5/97.5 percentiles over 1 000 resamples. Metrics are
+  numpy implementations (QWK from the confusion matrix) to keep 1 000 × runs × metrics cheap.
+- **`evaluate.py` also exports ONNX** (`eval.export_onnx=true`, default) with the fitted
+  temperature baked in, so `runs/smoke/model.onnx` exists after the smoke evaluation.
+- **Experiment membership** is recorded in each `report.json` (`experiment` field from
+  `cfg.sweep.name`); `scripts/sweep.py` collects run directories by that field rather than by
+  path convention, then writes `manifest.json` and the aggregated tables next to it.
