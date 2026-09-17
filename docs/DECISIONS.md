@@ -44,3 +44,34 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
   but are reproducible; Lightning does not call `set_epoch` on non-distributed samplers.
 - **Tests use 64 px images** on a 40-image synthetic corpus (fixture) for speed; the 512×512 output
   contract is asserted separately in `test_preprocess_contract`.
+
+## Model layer
+- **Dropout is implemented functionally** (`F.dropout(..., training=self.training or
+  self.dropout_active)`) in `GradingModel.forward` rather than as an `nn.Dropout` module, so a
+  single boolean flag switches MC sampling on for every backbone without touching module modes.
+- **All timm backbones are created with `num_classes=0`** (pooled features) and share one
+  `nn.Linear` head; ViT/Swin get `img_size=512`, Swin uses `window_size=8` (512/4 = 128 is
+  divisible by 8; 7 is not).
+- **`16-mixed` falls back to `32-true` on CPU/MPS** (Lightning does not support fp16 autocast
+  there). `deterministic="warn"` is used in the Trainer so CPU ops without deterministic kernels
+  warn instead of aborting.
+- **`best.ckpt` is always present**: if early stopping/checkpointing produced no "best" (e.g. the
+  monitored metric was never logged), `last.ckpt` is copied to `best.ckpt` so downstream scripts
+  have a stable path.
+- **LR schedule** is per-step linear warm-up (`warmup_epochs`) then cosine to zero, computed from
+  `trainer.estimated_stepping_batches`.
+
+## Uncertainty layer
+- **Uncertainty scores are always "higher = less confident"**: `maxp` is exposed as `1 - max p`
+  so the selective gate can use one comparison direction for all three scores.
+- **Temperature is optimised in log-space** with LBFGS (strong-Wolfe line search) to guarantee
+  `T > 0`. Argmax preservation is a property of dividing by a positive scalar.
+- **MC dropout reseeds torch's RNG** with a fixed seed for its `T` passes and restores the RNG
+  state afterwards, so `predict` is reproducible and does not perturb other randomness.
+- **Ensemble `mi`** is BALD mutual information of the member probabilities; `variance` (mean
+  across-member variance) is also available. Members are `LitGrader` checkpoints
+  (`eval.ensemble_ckpts`); by default `evaluate.py` collects the other seeds of the same model.
+- **`uq=none`/`temp_scaling` refuse `score=mi`** with a clear error, since MI requires
+  stochastic passes.
+- **ECE** uses right-inclusive equal-width bins so that confidence exactly 1.0 falls in the last
+  bin; this matches `netcal.metrics.ECE(bins=15)` to 1e-6 (tested).
