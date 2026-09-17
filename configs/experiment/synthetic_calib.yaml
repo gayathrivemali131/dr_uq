@@ -1,0 +1,18 @@
+# @package _global_
+# Pipeline-validation sweep on the synthetic corpus: 2 backbones x 4 UQ methods x 3 seeds.
+defaults:
+  - override /data: synthetic
+
+train:
+  max_epochs: 12
+  progress_bar: false
+  early_stopping:
+    patience: 5
+
+sweep:
+  name: synthetic_calib
+  train_overrides: "model=resnet50,efficientnet_b4 train.seed=0,1,2"
+  eval_overrides: "model=resnet50,efficientnet_b4 train.seed=0,1,2 uq=none,temp_scaling,mc_dropout,ensemble"
+  stage: all
+  extra_overrides: []
+  manifest: runs/sweeps/synthetic_calib/manifest.json

@@ -162,3 +162,12 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
   `python -m dr_uq.deploy.build_trt` and `python -m dr_uq.deploy.profile`.
 - `shift_messidor2` evaluates APTOS checkpoints on all of Messidor-2 with `eval.fit_data=aptos`
   so temperature and thresholds come from the APTOS validation split (no test-set leakage).
+
+## Review documents
+- **PRC-2 PDFs are generated, not hand-written** (`docs/prc2/build_docs.py`): tables and figures
+  are read from `runs/` so the documents can be rebuilt after every experiment. HTML is rendered
+  to PDF with headless Chrome (no LaTeX/pandoc dependency). The intermediate `.html` files are
+  git-ignored; the PDFs and composite figures are committed as deliverables.
+- **Preliminary results use the synthetic corpus** (`experiment=synthetic_calib`: ResNet-50 and
+  EfficientNet-B4 × 3 seeds × 4 UQ methods, 12 epochs) because the real corpora need Kaggle /
+  ADCIS / IEEE DataPort access; every document states this explicitly.

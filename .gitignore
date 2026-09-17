@@ -22,3 +22,4 @@ wandb/
 .coverage
 notebooks/*.ipynb
 sample.png
+docs/prc2/*.html
