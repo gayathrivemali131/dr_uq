@@ -12,6 +12,7 @@ Usage::
 from __future__ import annotations
 
 import argparse
+import shutil
 from pathlib import Path
 
 import cv2
@@ -109,8 +110,16 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=300)
     ap.add_argument("--size", type=int, default=512)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument(
+        "--sample",
+        type=Path,
+        default=Path("sample.png"),
+        help="also copy the first image here for CLI smoke tests ('' to skip)",
+    )
     args = ap.parse_args()
     df = make_corpus(args.out, args.n, args.size, args.seed)
+    if str(args.sample):
+        shutil.copy(args.out / "images" / f"{df.image.iloc[0]}.png", args.sample)
     print(
         f"wrote {len(df)} images to {args.out} (grade counts: {df.grade.value_counts().sort_index().tolist()})"
     )
