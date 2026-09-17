@@ -21,3 +21,4 @@ wandb/
 .DS_Store
 .coverage
 notebooks/*.ipynb
+sample.png

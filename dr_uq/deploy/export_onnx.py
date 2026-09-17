@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -90,3 +91,48 @@ class OnnxGrader:
     def __call__(self, x: torch.Tensor) -> torch.Tensor:
         out = self.session.run(None, {self.input_name: x.detach().cpu().numpy().astype(np.float32)})
         return torch.from_numpy(np.asarray(out[0]))
+
+
+def _temperature_from_report(path: Path) -> float | None:
+    import json
+
+    rep = path / "report.json"
+    if rep.exists():
+        try:
+            return float(json.loads(rep.read_text()).get("temperature", 1.0))
+        except (json.JSONDecodeError, ValueError):
+            return None
+    return None
+
+
+def export_from_cfg(cfg: Any) -> Path:
+    """Export the checkpoint named in ``cfg.eval.ckpt`` with the fitted temperature (if any)."""
+    from dr_uq.models.grading_model import load_grading_model
+
+    model = load_grading_model(str(cfg.eval.ckpt), map_location="cpu")
+    temperature = _temperature_from_report(Path(str(cfg.eval.out_dir))) or 1.0
+    return export_onnx(
+        model,
+        Path(str(cfg.deploy.onnx.path)),
+        temperature=temperature,
+        img_size=int(cfg.data.image_size),
+        opset=int(cfg.deploy.onnx.opset),
+        atol=float(cfg.deploy.onnx.atol),
+    )
+
+
+def main() -> None:  # pragma: no cover - thin CLI
+    """``python -m dr_uq.deploy.export_onnx experiment=deploy_profile``."""
+    import hydra
+
+    root = Path(__file__).resolve().parents[2] / "configs"
+
+    @hydra.main(config_path=str(root), config_name="config", version_base="1.3")
+    def _run(cfg: Any) -> None:
+        print(export_from_cfg(cfg))
+
+    _run()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

@@ -28,6 +28,7 @@ eval:
   ensemble_ckpts: []            # used by uq=ensemble; defaults to seeds of the same model
   out_dir: ${run_dir}/eval-${uq.name}
   external: false               # evaluate on the whole `data` corpus as a test set
+  fit_data: null                # data group whose val split fits T / thresholds for external eval
   batch_size: 32
   export_onnx: true
   n_tau: 200
@@ -41,6 +42,7 @@ explain:
   out_dir: ${run_dir}/explain
   ckpt: ${eval.ckpt}
   generator_ckpt: null          # StyleGAN2-ADA pickle/pt; null -> placeholder generator
+  stylegan2_repo: null          # checkout of NVlabs/stylegan2-ada-pytorch (for dnnlib/torch_utils)
   generator: placeholder        # placeholder | stylegan2
   latent_dim: 64
   invert_steps: 100

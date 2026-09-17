@@ -133,3 +133,32 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
   template anonymises image ids so the review can be blinded.
 - `explain.py` writes per-image `uncertainty` (predictive entropy under the fitted temperature)
   alongside every explanation-quality metric to enable the uncertainty × explanation analysis.
+
+## Serving layer
+- **ONNX graph = backbone + `/T`** (`TemperatureScaled`), exported with the legacy TorchScript
+  exporter (`dynamo=False`, opset 17) and a dynamic batch axis; ONNX Runtime output is asserted to
+  match PyTorch within `deploy.onnx.atol` (1e-3) on export.
+- **CLI temperature semantics:** the ONNX/TensorRT graphs already contain the fitted `T`, so
+  `--temperature` is an *extra* factor (pass `1.0`). For `.ckpt` engines it is the only one.
+  Engine type is inferred from the file suffix (`.plan`/`.engine` → TensorRT, `.onnx` → ONNX
+  Runtime, `.ckpt` → PyTorch, optionally with `--mc-passes N` for MC dropout + `--score mi`).
+- **TensorRT is fully lazy**: `dr_uq.deploy.build_trt` sets `TRT_AVAILABLE` and raises
+  `TensorRTUnavailable` with instructions when engines are requested without the library;
+  INT8 uses `IInt8EntropyCalibrator2` fed with `deploy.trt.calib_batches` validation batches and
+  a persisted calibration cache. GPU-only code is excluded from coverage and from
+  `disallow_untyped_defs` (types only exist when TensorRT is installed).
+- **Profiling** is batch-1 with `warmup` + `n_runs` timed calls; memory is CUDA
+  `max_memory_allocated` on GPU and peak-RSS delta on CPU (coarse, documented as such). The MC
+  dropout path is profiled as one callable doing `mc_passes` forward passes.
+- **`scripts/make_synthetic_corpus.py` also writes `sample.png`** in the working directory so the
+  documented one-line definition-of-done chain (which ends with `dr-uq grade ... sample.png`) runs
+  without a manual copy; pass `--sample ''` to skip.
+- **Docker** builds on the NVIDIA PyTorch container with `tensorrt` pinned via `TRT_VERSION`.
+
+## Experiments
+- `calib_sweep` and `shift_messidor2` carry a `sweep` block (`train_overrides`,
+  `eval_overrides`, `stage`, `manifest`) consumed by `scripts/sweep.py`; `cf_validation_idrid` is
+  run with `scripts/explain.py`, `deploy_profile` with `python -m dr_uq.deploy.export_onnx`,
+  `python -m dr_uq.deploy.build_trt` and `python -m dr_uq.deploy.profile`.
+- `shift_messidor2` evaluates APTOS checkpoints on all of Messidor-2 with `eval.fit_data=aptos`
+  so temperature and thresholds come from the APTOS validation split (no test-set leakage).

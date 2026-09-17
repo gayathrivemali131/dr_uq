@@ -18,6 +18,7 @@ jobs:
         run: |
           uv python install 3.11
           uv sync --extra dev --frozen
+          uv pip install -e .
       - name: Ruff
         run: uv run ruff check .
       - name: Black

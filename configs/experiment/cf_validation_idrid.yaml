@@ -7,6 +7,8 @@ defaults:
 
 eval:
   external: true
+  fit_data: aptos
+  out_dir: runs/aptos-resnet50-s0/eval-temp_scaling
   ckpt: runs/aptos-resnet50-s0/checkpoints/best.ckpt
 explain:
   ckpt: runs/aptos-resnet50-s0/checkpoints/best.ckpt
@@ -14,6 +16,7 @@ explain:
   n_images: 81
   generator: stylegan2
   generator_ckpt: runs/generator/stylegan2_ada.pkl
+  stylegan2_repo: third_party/stylegan2-ada-pytorch
   lambda_lpips: 0.5
   compute_fid: true
   gradcam: true
