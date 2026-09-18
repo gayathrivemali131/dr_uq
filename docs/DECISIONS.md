@@ -171,3 +171,25 @@ Every non-obvious choice, in the order it was made. Newer entries at the bottom.
 - **Preliminary results use the synthetic corpus** (`experiment=synthetic_calib`: ResNet-50 and
   EfficientNet-B4 × 3 seeds × 4 UQ methods, 12 epochs) because the real corpora need Kaggle /
   ADCIS / IEEE DataPort access; every document states this explicitly.
+
+## Cloud deployment (Modal)
+- **`modal_app.py` reuses the repository scripts unchanged**: `train`/`evaluate` shell out to
+  `scripts/train.py` and `scripts/evaluate.py` with Hydra overrides (`run_dir=/vol/runs/...`,
+  `paths.manifests_dir=/vol/manifests`) so a cloud run is byte-for-byte the same pipeline as a
+  local one; data, cache, manifests and runs live on one Modal volume (`dr-uq-vol`).
+- **APTOS 2019 comes from the public Hugging Face mirror `sngsfydy/aptos`** (full-resolution
+  Kaggle images, labels 0–4) because the Kaggle API needs credentials and competition-rule
+  acceptance. Images are stored with the long side at 1024 px, which is above the 512 px working
+  resolution. The 224 px mirrors were rejected as too small. IDRiD *test* images are stored only
+  as demo-gallery examples and never enter training or evaluation.
+- **The Gradio web app is pinned to one container (`max_containers=1`, `max_inputs=8`)**:
+  Gradio keeps upload and queue state in-process, so autoscaling to a second container split a
+  session's upload and result stream and requests hung. `DR_UQ_KEEP_WARM=1` at deploy time sets
+  `min_containers=1` for live presentations; the default scales to zero.
+- **Demo counterfactuals use an image-space low-frequency residual generator** (a 64×64×3 latent
+  upsampled bilinearly and added to the image) implemented against the `GeneratorBase`
+  interface, so `explain()` runs unchanged. It stands in until the StyleGAN2-ADA generator is
+  trained and is labelled as such in the UI.
+- **Compute:** A10G for training/evaluation, T4 for serving. A first real-data run
+  (EfficientNet-B4, seed 0, APTOS test n = 550) gave QWK 0.829, accuracy 0.742, referable AUROC
+  0.961, ECE 0.069 after temperature scaling (T = 0.747), AURC 0.129 (MC dropout 0.114).

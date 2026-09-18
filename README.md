@@ -248,6 +248,24 @@ Split manifests are built on first use (or `python scripts/build_manifest.py dat
 
 ---
 
+## ☁️ Live demo on Modal
+
+`modal_app.py` runs the same scripts in the cloud and serves a Gradio front end (upload a fundus
+photograph → calibrated grade or **REFER**, Grad-CAM, counterfactual, metrics tab).
+
+```bash
+uv pip install modal && modal setup                       # once
+modal run modal_app.py::pipeline --epochs 18              # APTOS 2019 (public HF mirror) → train → evaluate
+modal deploy modal_app.py                                 # prints the public URL
+DR_UQ_KEEP_WARM=1 modal deploy modal_app.py               # keep one GPU container warm for a live demo
+```
+
+First real-data run (EfficientNet-B4, APTOS 2019 held-out test, n = 550): QWK 0.829 · accuracy 0.742 ·
+referable AUROC 0.961 · ECE 0.069 after temperature scaling · AURC 0.129. See
+[`docs/DECISIONS.md`](docs/DECISIONS.md#cloud-deployment-modal) for the deployment choices.
+
+---
+
 ## 🗂️ Repository layout
 
 ```
@@ -260,6 +278,7 @@ dr_uq/
   evaluation/      calibration · grading · runner · report
   deploy/          export_onnx · build_trt · profile · cli
 configs/           data/ model/ uq/ train/ deploy/ experiment/ config.yaml
+modal_app.py       Modal deployment: data · train · evaluate · Gradio demo
 scripts/           train · evaluate · sweep · explain · train_generator · make_synthetic_corpus · build_manifest · check_configs
 tests/             unit/ integration/
 docs/              DECISIONS.md · MODEL_CARD_TEMPLATE.md · assets/ · prc2/
